@@ -1,6 +1,13 @@
+```markdown
 # 🎟️ SHOWTIME - Premium Ticket Exchange Platform
 
 A modern, production-ready **MERN microservices monorepo** for building scalable, multi-tenant ticketing systems. Built with React (Frontend), Express.js (Backend Services), and MongoDB (Atlas), deployed serverless on Vercel.
+
+### 🌐 Live Production Deployment
+* **Frontend UI Application:** [https://showtime-frontend.vercel.app](https://showtime-frontend.vercel.app)
+* **Auth Microservice API:** `https://showtime-ticket-exchange-platform.vercel.app`
+* **Tenant Microservice API:** `https://showtime-tenant-service.vercel.app`
+* **Ticket Microservice API:** `https://showtime-ticket-service.vercel.app`
 
 ---
 
@@ -12,124 +19,78 @@ A modern, production-ready **MERN microservices monorepo** for building scalable
 - [Environment Configuration](#environment-configuration)
 - [Deployment & Production](#deployment--production)
 - [API Reference](#api-reference)
-- [Contributing](#contributing)
+- [License](#-license)
 
 ---
 
 ## 🏗️ System Architecture
 
+
 ```
+
 ┌─────────────────────────────────────────────────────────────────┐
 │                    React Frontend (Vite)                         │
-│              Vercel Deployment (https://...)                     │
+│              [https://showtime-frontend.vercel.app](https://www.google.com/url?sa=E&source=gmail&q=https://showtime-frontend.vercel.app)               │
 │  (Single-page app with client-side routing, SPA rewrites)        │
 └────────────────┬──────────┬─────────────────┬────────────────────┘
-                 │          │                 │
-        ┌────────▼──┐ ┌─────▼──────┐ ┌────────▼───────┐
-        │ Auth      │ │ Tenant     │ │ Ticket        │
-        │ Service   │ │ Service    │ │ Service       │
-        │ (5001)    │ │ (5002)     │ │ (5003)        │
-        │ Vercel    │ │ Vercel     │ │ Vercel        │
-        │ Functions │ │ Functions  │ │ Functions     │
-        └────┬──────┘ └─────┬──────┘ └────┬──────────┘
-             │              │             │
-        ┌────▼──────────────▼─────────────▼────┐
-        │    MongoDB Atlas (Serverless)        │
-        │  - auth-service database             │
-        │  - tenant-service database           │
-        │  - ticket-service database           │
-        │                                      │
-        │  Connection Pooling: 2-5 (Serverless)
-        │  Timeouts: 5000ms (Cold Start Ready)
-        └──────────────────────────────────────┘
+│          │                 │
+┌────────▼──┐ ┌─────▼──────┐ ┌────────▼───────┐
+│ Auth      │ │ Tenant     │ │ Ticket        │
+│ Service   │ │ Service    │ │ Service       │
+│ (5001)    │ │ (5002)     │ │ (5003)        │
+│ Vercel    │ │ Vercel     │ │ Vercel        │
+│ Functions │ │ Functions  │ │ Functions     │
+└────┬──────┘ └─────┬──────┘ └────┬──────────┘
+│              │             │
+┌────▼──────────────▼─────────────▼────┐
+│    MongoDB Atlas (Serverless)        │
+│  - Connection Pooling: maxPoolSize: 2│
+│  - Buffer Commands: false            │
+└──────────────────────────────────────┘
+
 ```
 
 ### Service Responsibilities
 
-| Service            | Port                | Responsibility                                                                          |
-| ------------------ | ------------------- | --------------------------------------------------------------------------------------- |
-| **Frontend**       | 3000 (dev) / Vercel | User Interface, Authentication UI, Event Discovery, Booking Management                  |
-| **Auth Service**   | 5001                | User Authentication, JWT Token Issuance, Google OAuth Integration, Session Management   |
-| **Tenant Service** | 5002                | Tenant Configuration, Event Management, Organizer Analytics, Payout Settings            |
-| **Ticket Service** | 5003                | Ticket Creation, Payment Processing (Razorpay), Inventory Management, Order Fulfillment |
-
-### Data Flow
-
-```
-User (Frontend)
-    ↓
-[Single Sign-On or Traditional Auth]
-    ↓
-Auth Service → JWT Token Issued
-    ↓
-Frontend stores token in httpOnly cookie
-    ↓
-[Organizer creates event]
-    ↓
-Tenant Service → Event stored in MongoDB
-    ↓
-[Customer discovers & books tickets]
-    ↓
-Ticket Service → Creates order, initiates Razorpay payment
-    ↓
-Ticket Service → Verifies payment signature
-    ↓
-MongoDB → Ticket record created
-    ↓
-Frontend → Order confirmation displayed
-```
+| Service | Dev Port | Live Production Endpoint | Responsibility |
+| :--- | :--- | :--- | :--- |
+| **Frontend** | `5173` | `https://showtime-frontend.vercel.app` | User Interface, Authentication state, Event Discovery, Booking Workflows. |
+| **Auth Service** | `5001` | `https://showtime-ticket-exchange-platform.vercel.app` | Identity provider, JWT issuance, Google OAuth integration, secure session cookies. |
+| **Tenant Service** | `5002` | `https://showtime-tenant-service.vercel.app` | Organizer profile settings, event registration, branding config, dashboard analytics. |
+| **Ticket Service** | `5003` | `https://showtime-ticket-service.vercel.app` | Inventory management, order fulfillment, payment signing and verification via Razorpay. |
 
 ---
 
 ## 📁 Project Structure
 
+
 ```
+
 ticketing-monorepo/
 ├── frontend/                          # React + Vite single-page application
 │   ├── src/
 │   │   ├── components/               # Reusable UI components
 │   │   ├── pages/                    # Route pages (Login, Dashboard, etc)
-│   │   ├── services/                 # API client services
-│   │   ├── hooks/                    # Custom React hooks
-│   │   ├── context/                  # Global state (AuthContext)
-│   │   ├── App.jsx
+│   │   ├── services/                 # API client configurations (Axios instances)
 │   │   └── main.jsx
-│   ├── vercel.json                   # SPA rewrite configuration
-│   ├── vite.config.js                # Vite build configuration
+│   ├── vercel.json                   # Client-side router SPA rewrite mapping
 │   └── package.json
 │
 ├── backend/
-│   ├── auth-service/                 # Authentication & Authorization Microservice
-│   │   ├── config/db.js              # Serverless MongoDB connection cache
-│   │   ├── controllers/authController.js
-│   │   ├── models/                   # Mongoose schemas (User, Audience, Organizer)
-│   │   ├── middlewares/              # Tenant context middleware
-│   │   ├── routes/authRoutes.js
-│   │   ├── server.js                 # Express app entry point
+│   ├── auth-service/                 # Identity Management Service
+│   │   ├── config/db.js              # Serverless connection caching strategy
+│   │   ├── server.js                 # Gatekeeper Express application core
 │   │   └── package.json
 │   │
-│   ├── tenant-service/               # Tenant & Event Management Microservice
-│   │   ├── config/db.js              # Serverless MongoDB connection cache
-│   │   ├── controllers/tenantController.js
-│   │   ├── models/                   # Mongoose schemas (Tenant, Event)
-│   │   ├── middlewares/              # Tenant context middleware
-│   │   ├── routes/tenantRoutes.js
-│   │   ├── server.js                 # Express app entry point
+│   ├── tenant-service/               # Core Vendor Customization Engine
+│   │   ├── config/db.js              # Caching configuration layer
+│   │   ├── server.js                 # File size-optimized processing engine
 │   │   └── package.json
 │   │
-│   └── ticket-service/               # Ticket & Payment Processing Microservice
-│       ├── config/db.js              # Serverless MongoDB connection cache
-│       ├── controllers/ticketController.js
-│       ├── models/                   # Mongoose schemas (Ticket, Order)
-│       ├── middlewares/              # Tenant context middleware
-│       ├── routes/ticketRoutes.js
-│       ├── server.js                 # Express app entry point
+│   └── ticket-service/               # Transaction & Financial Ledger Gateway
+│       ├── config/db.js              # Connection pooling manager
+│       ├── server.js                 # Secure backend Razorpay runner
 │       └── package.json
-│
-├── .gitignore                        # Git exclusion rules
-├── .env.example                      # Environment variable template
-├── PRODUCTION_READINESS_AUDIT.txt    # Technical audit report
-└── README.md                         # This file
 
 ```
 
@@ -139,83 +100,65 @@ ticketing-monorepo/
 
 ### Prerequisites
 
-- **Node.js** 16+ and npm 8+
-- **MongoDB Atlas** account (free tier available at https://mongodb.com/cloud/atlas)
-- **Google OAuth Client ID** (for social login)
-- **Razorpay Account** (for payment processing)
-- **Git**
+* **Node.js** 18+ and npm 9+
+* **MongoDB Atlas** account with a shared cluster configured
+* **Google Cloud Console** account (OAuth 2.0 Web Client credentials)
+* **Razorpay Developer Dashboard** account (API Keys in Test Mode)
 
-### Step 1: Clone Repository
-
-```bash
-git clone https://github.com/yourusername/ticketing-monorepo.git
-cd ticketing-monorepo
-```
-
-### Step 2: Install Dependencies
+### Step 1: Clone the Repository
 
 ```bash
-# Frontend
-cd frontend
-npm install
-cd ..
+git clone [https://github.com/Deekshith-80s/SHOWTIME---Ticket-Exchange-Platform.git](https://github.com/Deekshith-80s/SHOWTIME---Ticket-Exchange-Platform.git)
+cd SHOWTIME---Ticket-Exchange-Platform
 
-# Auth Service
-cd backend/auth-service
-npm install
-cd ../..
-
-# Tenant Service
-cd backend/tenant-service
-npm install
-cd ../..
-
-# Ticket Service
-cd backend/ticket-service
-npm install
-cd ../..
 ```
 
-### Step 3: Configure Environment Variables
-
-Copy `.env.example` to `.env` files in each service:
+### Step 2: Install Monorepo Dependencies
 
 ```bash
-# Create .env files from the template
-cp .env.example backend/auth-service/.env
-cp .env.example backend/tenant-service/.env
-cp .env.example backend/ticket-service/.env
-cp .env.example frontend/.env.local
+# Install frontend assets
+cd frontend && npm install && cd ..
+
+# Install microservices assets
+cd backend/auth-service && npm install && cd ../..
+cd backend/tenant-service && npm install && cd ../..
+cd backend/ticket-service && npm install && cd ../..
+
 ```
 
-Then, populate each `.env` file with your actual credentials:
+### Step 3: Populate Local Environment Files (`.env`)
+
+> ⚠️ **Important:** Do not append a trailing slash (`/`) to URLs inside environmental configuration strings.
 
 **backend/auth-service/.env**
 
 ```env
 PORT=5001
-MONGO_URI=mongodb+srv://user:password@cluster.mongodb.net/auth-service
-JWT_SECRET=your_super_secret_jwt_key_min_32_characters
-FRONTEND_URL=http://localhost:3000
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/auth-service?retryWrites=true&w=majority
+JWT_SECRET=<YOUR_LOCAL_SECRET_KEY_STRING>
+FRONTEND_URL=http://localhost:5173
+
 ```
 
 **backend/tenant-service/.env**
 
 ```env
 PORT=5002
-MONGO_URI=mongodb+srv://user:password@cluster.mongodb.net/tenant-service
-FRONTEND_URL=http://localhost:3000
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/tenant-service?retryWrites=true&w=majority
+FRONTEND_URL=http://localhost:5173
+
 ```
 
 **backend/ticket-service/.env**
 
 ```env
 PORT=5003
-MONGO_URI=mongodb+srv://user:password@cluster.mongodb.net/ticket-service
-FRONTEND_URL=http://localhost:3000
-RAZORPAY_KEY_ID=your_razorpay_key
-RAZORPAY_KEY_SECRET=your_razorpay_secret
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/ticket-service?retryWrites=true&w=majority
+FRONTEND_URL=http://localhost:5173
 TENANT_SERVICE_URL=http://localhost:5002
+RAZORPAY_KEY_ID=<YOUR_RAZORPAY_TEST_KEY_ID>
+RAZORPAY_KEY_SECRET=<YOUR_RAZORPAY_TEST_SECRET_KEY>
+
 ```
 
 **frontend/.env.local**
@@ -224,233 +167,118 @@ TENANT_SERVICE_URL=http://localhost:5002
 VITE_AUTH_SERVICE_URL=http://localhost:5001
 VITE_TENANT_SERVICE_URL=http://localhost:5002
 VITE_TICKET_SERVICE_URL=http://localhost:5003
-VITE_GOOGLE_CLIENT_ID=your_google_oauth_client_id
-VITE_RAZORPAY_KEY_ID=your_razorpay_test_key
-VITE_TENANT_ID=production-main
+VITE_GOOGLE_CLIENT_ID=<YOUR_GOOGLE_OAUTH_CLIENT_ID>
+VITE_RAZORPAY_KEY_ID=<YOUR_RAZORPAY_TEST_KEY_ID>
+
 ```
-
-### Step 4: Start All Services
-
-**Terminal 1 - Frontend (Port 3000)**
-
-```bash
-cd frontend
-npm run dev
-```
-
-**Terminal 2 - Auth Service (Port 5001)**
-
-```bash
-cd backend/auth-service
-npm start
-```
-
-**Terminal 3 - Tenant Service (Port 5002)**
-
-```bash
-cd backend/tenant-service
-npm start
-```
-
-**Terminal 4 - Ticket Service (Port 5003)**
-
-```bash
-cd backend/ticket-service
-npm start
-```
-
-### Step 5: Access the Application
-
-- **Frontend:** http://localhost:3000
-- **Auth Service:** http://localhost:5001/api/auth
-- **Tenant Service:** http://localhost:5002/api/tenant
-- **Ticket Service:** http://localhost:5003/api/tickets
 
 ---
 
-## 🔐 Environment Configuration
+## 🔐 Environment Configuration (Cloud Ecosystem)
 
-### Local Development (.env files)
+For production serverless orchestration across Vercel Functions, register these specific environment keys inside your Vercel project management dashboards:
 
-Each service reads a `.env` file for local development. **Never commit `.env` files to Git** — they will be excluded by `.gitignore`.
+### 1. Frontend Configuration (`showtime-frontend`)
 
-### Production Deployment (Vercel)
+* `VITE_AUTH_SERVICE_URL` ➔ `https://showtime-ticket-exchange-platform.vercel.app`
+* `VITE_TENANT_SERVICE_URL` ➔ `https://showtime-tenant-service.vercel.app`
+* `VITE_TICKET_SERVICE_URL` ➔ `https://showtime-ticket-service.vercel.app`
+* `VITE_GOOGLE_CLIENT_ID` ➔ `<YOUR_PRODUCTION_GOOGLE_CLIENT_ID>`
+* `VITE_RAZORPAY_KEY_ID` ➔ `<YOUR_PRODUCTION_RAZORPAY_KEY_ID>`
 
-For production deployments on Vercel:
+### 2. Auth Service Configuration (`showtime-ticket-exchange-platform`)
 
-1. **Frontend (Vercel Deployment Dashboard)**
-   - Environment Variables section
-   - Add: `VITE_AUTH_SERVICE_URL`, `VITE_TENANT_SERVICE_URL`, `VITE_TICKET_SERVICE_URL` pointing to your production API endpoints
-   - Add: `VITE_GOOGLE_CLIENT_ID` (production OAuth credentials)
-   - Add: `VITE_RAZORPAY_KEY_ID` (production Razorpay key)
+* `MONGO_URI` ➔ `mongodb+srv://<username>:<password>@<cluster>.mongodb.net/auth-service?retryWrites=true&w=majority`
+* `JWT_SECRET` ➔ `<YOUR_PRODUCTION_JWT_HASH_ENTROPY>`
+* `FRONTEND_URL` ➔ `https://showtime-frontend.vercel.app`
 
-2. **Auth Service (Vercel Functions)**
-   - Create a new Vercel project pointing to `backend/auth-service`
-   - Environment Variables:
-     - `MONGO_URI` (MongoDB Atlas connection string)
-     - `JWT_SECRET` (strong, random 32+ character string)
-     - `FRONTEND_URL` (your frontend Vercel domain)
+### 3. Tenant Service Configuration (`showtime-tenant-service`)
 
-3. **Tenant Service (Vercel Functions)**
-   - Create a new Vercel project pointing to `backend/tenant-service`
-   - Environment Variables:
-     - `MONGO_URI`
-     - `FRONTEND_URL`
+* `MONGO_URI` ➔ `mongodb+srv://<username>:<password>@<cluster>.mongodb.net/tenant-service?retryWrites=true&w=majority`
+* `FRONTEND_URL` ➔ `https://showtime-frontend.vercel.app`
 
-4. **Ticket Service (Vercel Functions)**
-   - Create a new Vercel project pointing to `backend/ticket-service`
-   - Environment Variables:
-     - `MONGO_URI`
-     - `FRONTEND_URL`
-     - `RAZORPAY_KEY_ID` (production key)
-     - `RAZORPAY_KEY_SECRET` (production secret)
-     - `TENANT_SERVICE_URL` (production Tenant Service URL)
+### 4. Ticket Service Configuration (`showtime-ticket-service`)
 
-**⚠️ Important:** Never store secrets in `.env` files tracked by Git. Always use Vercel Dashboard or a secrets management service (GitHub Secrets, HashiCorp Vault, etc.) for production credentials.
+* `MONGO_URI` ➔ `mongodb+srv://<username>:<password>@<cluster>.mongodb.net/ticket-service?retryWrites=true&w=majority`
+* `FRONTEND_URL` ➔ `https://showtime-frontend.vercel.app`
+* `TENANT_SERVICE_URL` ➔ `https://showtime-tenant-service.vercel.app`
+* `RAZORPAY_KEY_ID` ➔ `<YOUR_PRODUCTION_RAZORPAY_KEY_ID>`
+* `RAZORPAY_KEY_SECRET` ➔ `<YOUR_PRODUCTION_RAZORPAY_SECRET_KEY>`
 
 ---
 
 ## 📦 Deployment & Production
 
-### Serverless Architecture
+### Serverless Optimization Matrix
 
-The application is designed to be **serverless-ready** and deployed on **Vercel Functions**:
+Deploying stateless microservices into transient serverless environments introduces cold starts and potential runtime connection bottlenecks. This repository implements two core patterns to maintain absolute stability:
 
-✅ **Implemented Features:**
+#### 1. The Gatekeeper Request Middleware
 
-- MongoDB connection pooling optimized for serverless (maxPoolSize: 2)
-- Connection caching to prevent cold-start delays
-- Timeout configurations (5000ms) for reliable function execution
-- CORS configuration supporting HTTPS cross-domain requests
-- SPA rewrite rules in `vercel.json` for client-side routing
-- Secure HTTP-only, cross-domain cookies (sameSite: 'none')
+With Mongoose execution set to `bufferCommands: false` for cloud environments, running database operations before the connection pool fully initializes will cause instant runtime request crashes. Every microservice utilizes a global async verification gate inside `server.js` before routes parse:
 
-### Deployment Checklist
+```javascript
+app.use(async (req, res, next) => {
+  try {
+    await connectDB(); // Guarantees established connection handshake before execution
+    next();
+  } catch (error) {
+    res.status(500).json({ success: false, error: "Database runtime connection failure." });
+  }
+});
 
-- [ ] All credentials rotated and injected via Vercel Dashboard (not .env files)
-- [ ] `FRONTEND_URL` updated to production domain in all backend services
-- [ ] MongoDB Atlas IP whitelist includes Vercel's IP ranges
-- [ ] Google OAuth redirect URIs updated to production domain
-- [ ] Razorpay webhook URLs configured for production keys
-- [ ] Vercel deployment configured with `vercel.json` SPA rewrites
-- [ ] Domain SSL/TLS certificate provisioned (automatic on Vercel)
-- [ ] Monitoring and logging configured (Vercel Analytics, error tracking)
+```
 
-### Monitoring Production
+#### 2. Graceful Error Propagation
 
-1. **Vercel Deployment Dashboard** - Monitor function invocations and performance
-2. **MongoDB Atlas** - Check connection metrics and replica set health
-3. **Application Logs** - View in Vercel Function logs
-4. **Error Tracking** - Set up Sentry or similar for production errors
+To prevent serverless instances from hanging or freezing intermediate routing channels, database connection exceptions do not forcefully invoke destructive terminal commands like `process.exit(1)`. Instead, errors bubble out smoothly (`throw error`), allowing cloud runtime containers to recycle cleanly.
 
 ---
 
 ## 🔗 API Reference
 
-### Auth Service (`/api/auth`)
+### Auth Service Core (`/api/auth`)
+
+```text
+POST   /api/auth/register       - Profile initiation (Email / Security Key verification)
+POST   /api/auth/login          - Access validation & secure cross-domain cookie injection
+POST   /api/auth/google-login   - Identity parsing via Google verified tokens
+GET    /api/auth/me             - Identity resolution endpoint
+POST   /api/auth/logout         - Active token termination
 
 ```
-POST   /api/auth/register       - User registration (email/password)
-POST   /api/auth/login          - User login (email/password)
-POST   /api/auth/google-login   - Google OAuth sign-in
-GET    /api/auth/me             - Get current user session
-POST   /api/auth/logout         - End user session
-```
 
-### Tenant Service (`/api/tenant`)
+### Tenant Service Core (`/api/tenant`)
 
-```
-GET    /api/tenant/settings         - Fetch tenant profile settings
-PUT    /api/tenant/settings         - Update tenant profile settings
-POST   /api/tenant/events           - Create new event
-GET    /api/tenant/events/list      - Get organizer's events
-GET    /api/tenant/events/active    - Get all active events
-GET    /api/tenant/events/:eventId  - Get event details
-PATCH  /api/tenant/events/:id/cancel- Cancel an event
-GET    /api/tenant/analytics        - Get organizer analytics dashboard
-```
-
-### Ticket Service (`/api/tickets`)
+```text
+GET    /api/tenant/settings     - Retrieve active tenant customization branding
+PUT    /api/tenant/settings     - Update tenant configuration layout
+POST   /api/tenant/events       - Multi-tenant structured event instantiation
+GET    /api/tenant/events/list  - Query contextual data scoped to current organizer
 
 ```
-GET    /api/tickets/events/active   - Fetch active public events
-GET    /api/tickets/events/:id      - Get event details for booking
-POST   /api/tickets/orders          - Create ticket order
-POST   /api/tickets/verify          - Verify Razorpay payment
-GET    /api/tickets/me              - Fetch user's tickets
+
+### Ticket Service Core (`/api/tickets`)
+
+```text
+POST   /api/tickets/orders      - Initiate custom inventory ledger entry & sign Razorpay payment hash
+POST   /api/tickets/verify      - Cryptographic validation of incoming webhook signatures
+GET    /api/tickets/me          - Query user-scoped ticket ownership registry
+
 ```
-
----
-
-## 🛠️ Development Workflow
-
-### Running Tests
-
-```bash
-# Frontend tests
-cd frontend && npm test
-
-# Backend service tests
-cd backend/auth-service && npm test
-cd backend/tenant-service && npm test
-cd backend/ticket-service && npm test
-```
-
-### Code Formatting
-
-```bash
-# Install ESLint globally (optional)
-npm install -g eslint
-
-# Lint all services
-cd frontend && npm run lint
-cd ../backend/auth-service && npm run lint
-```
-
-### Database Migrations
-
-MongoDB schemas are managed via Mongoose. To update database structure:
-
-1. Modify schema files in `backend/*/models/`
-2. Mongoose will handle schema validation on next connection
-3. For breaking changes, create a migration script in `backend/scripts/`
-
----
-
-## 📝 Contributing
-
-### Guidelines
-
-1. **Branch naming:** `feature/short-description` or `fix/issue-name`
-2. **Commits:** Write clear, descriptive commit messages
-3. **Code style:** Use ESLint configuration provided
-4. **Testing:** Write tests for new features
-5. **Security:** Never commit credentials or sensitive data
-
-### Pull Request Process
-
-1. Create feature branch from `main`
-2. Make changes and test locally
-3. Push to GitHub and open a Pull Request
-4. Request code review from maintainers
-5. Address feedback and merge once approved
 
 ---
 
 ## 📄 License
 
-MIT License — See LICENSE file for details
+MIT License — Copyright (c) 2026 Deekshith D.
 
 ---
 
-## 🤝 Support & Contact
+**Last System Baseline Sync:** June 19, 2026
 
-- **Documentation:** See `PRODUCTION_READINESS_AUDIT.txt` for technical architecture notes
-- **Issues:** Report bugs via GitHub Issues
-- **Email:** operations@showtime.com
+**Architecture Status:** 🟢 Stable & Live on Vercel
 
----
+```
 
-**Last Updated:** June 19, 2026  
-**Version:** 1.0.0  
-**Status:** 🟢 Production-Ready (Serverless Optimized)
+```
