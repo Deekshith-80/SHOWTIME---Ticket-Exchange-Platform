@@ -10,9 +10,6 @@ const frontendOrigin = (
   process.env.FRONTEND_URL || "http://localhost:5173"
 ).trim();
 
-// Connect to the tenant database cluster
-connectDB();
-
 // CORS configuration to allow secure communication with the frontend
 app.use(
   cors({
@@ -31,6 +28,20 @@ app.options(
 // Configure body parsing middleware with 50mb limit for large Base64 media uploads
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+// Cloud-Native Gatekeeper Middleware: Guarantees active DB connection before query execution
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error("Database connection failure at runtime:", error.message);
+    res.status(500).json({ 
+      success: false, 
+      error: "Database connection failed at runtime." 
+    });
+  }
+});
 
 // Mount the Tenant configuration endpoints
 app.use("/api/tenant", tenantRoutes);
