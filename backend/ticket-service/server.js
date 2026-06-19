@@ -8,8 +8,6 @@ const app = express();
 const PORT = process.env.PORT || 5003;
 const frontendOrigin = (process.env.FRONTEND_URL || 'http://localhost:3000').trim();
 
-connectDB();
-
 app.use(cors({
   origin: frontendOrigin,
   credentials: true
@@ -21,6 +19,20 @@ app.options('*', cors({
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Cloud-Native Gatekeeper Middleware: Guarantees active DB connection before query execution
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error("Database connection failure at runtime:", error.message);
+    res.status(500).json({ 
+      success: false, 
+      error: "Database connection failed at runtime." 
+    });
+  }
+});
 
 app.use('/api/tickets', ticketRoutes);
 
