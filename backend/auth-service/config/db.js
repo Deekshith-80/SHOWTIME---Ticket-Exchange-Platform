@@ -24,7 +24,7 @@ const connectDB = async () => {
     return cachedConnection;
   } catch (error) {
     console.error(`Database connection critical failure: ${error.message}`);
-    process.exit(1);
+    throw error; // 👈 Safe, clean cloud-native alternative
   }
 };
 
